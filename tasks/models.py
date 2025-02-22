@@ -14,8 +14,6 @@ class Task(models.Model):
     due_date = models.DateField()
     is_completed = models.BooleanField(default=False)
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='Medium')
-
-    # Additional fields to satisfy the requirement:
     created_at = models.DateTimeField(auto_now_add=True)  # Timestamp for creation
     updated_at = models.DateTimeField(auto_now=True)  # Timestamp for last update
     assigned_to = models.CharField(max_length=255, blank=True, null=True)  # Placeholder for a user system
