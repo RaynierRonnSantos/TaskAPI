@@ -1,22 +1,33 @@
 from rest_framework import viewsets, status
-from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Task
-from .serializers import TaskSerializer
-from .services import TaskService
+from rest_framework.decorators import action
+from tasks.models import Task
+from tasks.serializers import TaskSerializer
+from tasks.services import TaskService  # Import Service Layer
 
 class TaskViewSet(viewsets.ModelViewSet):
-    queryset = Task.objects.all()
+    queryset = Task.objects.all().order_by('due_date', 'priority')
     serializer_class = TaskSerializer
-    
-    @action(detail=True, methods=['post'])
+
+    def perform_create(self, serializer):
+        """Use the service layer to create a task."""
+        TaskService.create_task(
+            title=serializer.validated_data['title'],
+            description=serializer.validated_data['description'],
+            due_date=serializer.validated_data['due_date'],
+            priority=serializer.validated_data['priority']
+        )
+
+    @action(detail=True, methods=["POST"])
     def complete(self, request, pk=None):
+        """Mark a task as completed using the service layer."""
         task = self.get_object()
-        TaskService.mark_complete(task)
-        return Response({'status': 'Task marked as complete'}, status=status.HTTP_200_OK)
-    
-    @action(detail=True, methods=['post'])
+        updated_task = TaskService.mark_task_complete(task)
+        return Response(TaskSerializer(updated_task).data)
+
+    @action(detail=True, methods=["POST"])
     def reopen(self, request, pk=None):
+        """Mark a task as not completed using the service layer."""
         task = self.get_object()
-        TaskService.mark_reopen(task)
-        return Response({'status': 'Task marked as not completed'}, status=status.HTTP_200_OK)
+        updated_task = TaskService.mark_task_reopen(task)
+        return Response(TaskSerializer(updated_task).data)
